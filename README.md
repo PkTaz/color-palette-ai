@@ -28,7 +28,7 @@ An intelligent color palette generator that uses Claude AI to create harmonious 
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/color-generator.git
+git clone https://github.com/PkTaz/color-palette-ai.git
 ```
 
 # Getting Started with Create React App
