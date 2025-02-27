@@ -1,3 +1,38 @@
+# AI Color Palette Generator
+
+An intelligent color palette generator that uses Claude AI to create harmonious color schemes based on natural language descriptions of businesses and brands.
+
+![Project Screenshot](screenshot.png)
+
+## 🎨 Features
+
+- Generate custom color palettes using natural language descriptions
+- AI-powered color selection based on brand psychology and color theory
+- Real-time visual preview of color combinations
+- Multiple palette suggestions with different moods
+- Interactive example UI showcasing color usage
+- Responsive design for all devices
+
+## 🚀 Technologies Used
+
+### Frontend
+- React.js
+- CSS3 with modern animations
+- Axios for API requests
+
+### Backend
+- Node.js
+- Express.js
+- Claude AI API
+- CORS for secure cross-origin requests
+
+## 🔧 Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/color-generator.git
+```
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
