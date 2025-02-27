@@ -4,7 +4,7 @@ An intelligent color palette generator that uses Claude AI to create harmonious 
 
 ## 🛠 Problem Solved
 
-One of the biggest challenges in developing this project was ensuring that the AI-generated color palettes were both aesthetically pleasing and aligned with branding principles. Initially, some color combinations were inconsistent or lacked cohesion. To solve this, I implemented additional filtering logic that evaluates each generated palette against established color theory principles and brand psychology guidelines. This significantly improved the quality of the suggested palettes, making them more practical for real-world branding applications.
+I bridged the gap between businesses and graphics by creating a generator that helps businesses get started with a beautiful and professional color palette. This tool leverages psychology, color theory, and AI to ensure that the generated palettes not only look appealing but also align with the brand's identity and message. By automating the palette creation process, businesses can quickly establish a cohesive and visually compelling brand presence without needing in-depth design knowledge.
 
 ## 🎨 Features
 
