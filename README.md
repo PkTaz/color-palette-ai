@@ -2,6 +2,10 @@
 
 An intelligent color palette generator that uses Claude AI to create harmonious color schemes based on natural language descriptions of businesses and brands.
 
+## 🛠 Problem Solved
+
+One of the biggest challenges in developing this project was ensuring that the AI-generated color palettes were both aesthetically pleasing and aligned with branding principles. Initially, some color combinations were inconsistent or lacked cohesion. To solve this, I implemented additional filtering logic that evaluates each generated palette against established color theory principles and brand psychology guidelines. This significantly improved the quality of the suggested palettes, making them more practical for real-world branding applications.
+
 ## 🎨 Features
 
 - Generate custom color palettes using natural language descriptions
