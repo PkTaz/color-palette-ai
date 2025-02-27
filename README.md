@@ -2,8 +2,6 @@
 
 An intelligent color palette generator that uses Claude AI to create harmonious color schemes based on natural language descriptions of businesses and brands.
 
-![Project Screenshot](screenshot.png)
-
 ## 🎨 Features
 
 - Generate custom color palettes using natural language descriptions
