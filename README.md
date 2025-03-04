@@ -185,7 +185,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👤 About the Developer
 
-Developed by [Your Name] as a demonstration of full-stack development skills, AI integration capabilities, and UI/UX design principles.
+Developed by William Chapman as a demonstration of full-stack development skills, AI integration capabilities, and UI/UX design principles.
 
 ---
 
