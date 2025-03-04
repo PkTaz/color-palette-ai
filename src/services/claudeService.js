@@ -1,15 +1,33 @@
 import axios from 'axios';
 
-export const generateColorPalette = async (userInput) => {
+export const generateColorPalette = async (businessIdea, lockedColors) => {
   try {
-    const response = await axios.post('http://localhost:5000/api/generate-palette', {
-      userInput
+    // Convert locked colors to a string format for the prompt
+    const lockedColorsStr = lockedColors
+      .map((color, index) => 
+        color ? `Color ${index + 1}: RGB(${color.join(',')})` : null
+      )
+      .filter(Boolean)
+      .join(', ');
+
+    const response = await fetch('/api/generate-palette', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        userInput: businessIdea,
+        lockedColors: lockedColors
+      })
     });
-    
-    // The response should already be parsed JSON
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
   } catch (error) {
-    console.error('Error generating color palette:', error);
-    return null;
+    console.error('Error generating palette:', error);
+    throw error;
   }
 };
