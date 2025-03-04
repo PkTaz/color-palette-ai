@@ -1,4 +1,4 @@
-# 🎨 RepTools Color Studio
+# 🎨 ColorPal Color Studio
 
 <div align="center">
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React"/>
@@ -11,11 +11,11 @@
 
 ## 📋 Overview
 
-RepTools Color Studio is an advanced AI-powered color palette generator designed to transform business ideas and brand concepts into cohesive, psychologically effective color schemes. The application integrates AI capabilities with color theory principles to deliver professional-grade palettes that communicate brand values and evoke specific emotional responses from target audiences.
+ColorPal Color Studio is an advanced AI-powered color palette generator designed to transform business ideas and brand concepts into cohesive, psychologically effective color schemes. The application integrates AI capabilities with color theory principles to deliver professional-grade palettes that communicate brand values and evoke specific emotional responses from target audiences.
 
 ### 🌟 Key Problem Solved
 
-Traditional color selection tools fail to account for industry-specific standards, psychological impact, and brand context. RepTools Color Studio bridges this gap by implementing AI models that analyze these factors to generate contextual, meaningful color palettes that directly connect with business objectives and target demographics.
+Traditional color selection tools fail to account for industry-specific standards, psychological impact, and brand context. ColorPal Color Studio bridges this gap by implementing AI models that analyze these factors to generate contextual, meaningful color palettes that directly connect with business objectives and target demographics.
 
 <div align="center">
   <img src="docs/screenshots/app-preview.png" alt="RepTools Color Studio Interface" width="800"/>
@@ -103,7 +103,7 @@ Traditional color selection tools fail to account for industry-specific standard
 
 ### Color Learning System
 
-The heart of RepTools Color Studio is its sophisticated learning system that:
+The heart of ColorPal Color Studio is its sophisticated learning system that:
 
 1. **Captures User Feedback**: Records user likes/dislikes on generated palettes
 2. **Identifies Patterns**: Analyzes color combinations that receive positive feedback
