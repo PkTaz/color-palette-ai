@@ -18,7 +18,7 @@ ColorPal Color Studio is an advanced AI-powered color palette generator designed
 Traditional color selection tools fail to account for industry-specific standards, psychological impact, and brand context. ColorPal Color Studio bridges this gap by implementing AI models that analyze these factors to generate contextual, meaningful color palettes that directly connect with business objectives and target demographics.
 
 <div align="center">
-  <img src="docs/screenshots/app-preview.png" alt="RepTools Color Studio Interface" width="800"/>
+  <img src="docs/screenshots/app-preview.PNG" alt="RepTools Color Studio Interface" width="800"/>
 </div>
 
 ## ✨ Features
