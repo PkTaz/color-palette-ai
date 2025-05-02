@@ -3,14 +3,14 @@ import { generateColorPalette } from './services/claudeService';
 import './App.css';
 import { FaHammer } from 'react-icons/fa';
 
-// Add new imports
+
 import { ColorAI } from './utils/colorAI';
 import { ColorLearningSystem } from './utils/colorLearning';
 import { processImage } from './services/imageService';
 import ColorPsychology from './components/ColorPsychology';
 import ColorTheory from './components/ColorTheory';
 
-// Initialize AI systems
+
 const colorAI = new ColorAI();
 const learningSystem = new ColorLearningSystem();
 
@@ -23,7 +23,7 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Update the state declarations at the top of App component
+
   const [lockedColors, setLockedColors] = useState(new Set());
   const [currentPalette, setCurrentPalette] = useState(Array(5).fill([255, 255, 255]));
   const [notification, setNotification] = useState(null);
@@ -32,11 +32,11 @@ function App() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const headerRef = useRef(null);
 
-  // Update the copyToClipboard function
+
   const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text)
       .then(() => {
-        // Create a more elegant notification
+     
         const notification = document.createElement('div');
         notification.className = 'notification';
         notification.innerHTML = `
@@ -50,7 +50,7 @@ function App() {
         `;
         document.body.appendChild(notification);
         
-        // Remove notification after animation completes
+        
         setTimeout(() => {
           notification.remove();
         }, 3000);
@@ -64,7 +64,7 @@ function App() {
     localStorage.setItem('savedPalettes', JSON.stringify(savedPalettes));
   }, [savedPalettes]);
 
-  // Add scroll event listener with precise tracking
+  
   useEffect(() => {
     const handleScroll = () => {
       // Calculate scroll progress (0 to 1) over first 200px of scroll
@@ -98,14 +98,14 @@ function App() {
   const fetchColorPalette = async () => {
     setIsLoading(true);
     try {
-      // Create array showing which colors are locked and their RGB values
+      
       const lockedColorsData = currentPalette.map((color, index) => 
         lockedColors.has(index) ? color : null
       );
 
       const response = await generateColorPalette(businessIdea, lockedColorsData);
       if (response?.palettes?.[0]) {
-        // Merge new colors with locked colors
+        // Merged new colors with locked colors
         const newColors = response.palettes[0].colors.map((color, index) => 
           lockedColors.has(index) ? currentPalette[index] : color
         );
@@ -122,7 +122,7 @@ function App() {
     setIsLoading(false);
   };
 
-  // Add image upload handler
+  // image upload handler
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -142,18 +142,18 @@ function App() {
     }
   };
 
-  // Add the missing savePalette function
+  
   const savePalette = () => {
     if (!colorPalette) return;
     
-    // Create palette object with current data
+    
     const newPalette = {
       ...colorPalette,
       id: Date.now(),
       businessDescription: businessIdea
     };
     
-    // Add to saved palettes array
+    
     setSavedPalettes(prevPalettes => [newPalette, ...prevPalettes]);
   };
 
@@ -200,7 +200,7 @@ function App() {
       timestamp: new Date()
     });
     
-    // Enhanced notification
+    
     const notification = document.createElement('div');
     notification.className = 'notification';
     notification.innerHTML = `
@@ -223,7 +223,7 @@ function App() {
     setSavedPalettes(savedPalettes.filter(palette => palette.id !== paletteId));
   };
 
-  // Add a more descriptive handleColorLock function
+  
   const handleColorLock = (index) => {
     if (!colorPalette) return;
     
@@ -245,7 +245,7 @@ function App() {
     });
   };
 
-  // Add this new handler function after handleRemoveSaved
+  
   const handleRestorePalette = (palette) => {
     setColorPalette(palette);
     setCurrentPalette(palette.colors);
@@ -415,7 +415,7 @@ function App() {
             </div>
           )}
 
-          {/* Add Color Theory Section */}
+          {/* Color Theory Section */}
           <ColorTheory />
         </main>
         
