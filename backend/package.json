@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "server.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
+    "build": "npm install",
     "start": "node server.js"
   },
   "dependencies": {

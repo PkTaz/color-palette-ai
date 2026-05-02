@@ -1,0 +1,17 @@
+# Render Blueprint: API only (monorepo).
+# After deploy, set GEMINI_SECRET_KEY or GEMINI_API_KEY in the service's Environment tab.
+# Frontend: deploy separately (Render Static Site or Netlify) with REACT_APP_API_URL = this service URL.
+
+services:
+  - type: web
+    name: colorpal-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
