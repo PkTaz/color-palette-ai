@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const rateLimit = require('express-rate-limit');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const getEnvPath = path.join(__dirname, 'get.env');
@@ -14,8 +15,20 @@ if (fs.existsSync(dotEnvPath)) {
 }
 
 const app = express();
+if (process.env.TRUST_PROXY === '1' || process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 app.use(cors());
-app.use(express.json());
+const jsonLimit = process.env.JSON_BODY_LIMIT || '32kb';
+app.use(express.json({ limit: jsonLimit }));
+
+const paletteRateLimit = rateLimit({
+  windowMs: Number(process.env.PALETTE_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: Number(process.env.PALETTE_RATE_LIMIT_MAX) || 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests', details: 'Rate limit exceeded. Try again later.' },
+});
 
 /** Prefer Gemini 2.5 Flash; fall back if quota/model unavailable (override with GEMINI_MODEL). */
 const GEMINI_MODEL_FALLBACKS = [
@@ -225,9 +238,27 @@ async function generatePaletteWithModelFallback(apiKey, prompt) {
   throw lastError;
 }
 
-app.post('/api/generate-palette', async (req, res) => {
+app.post('/api/generate-palette', paletteRateLimit, async (req, res) => {
   try {
-    const { userInput, lockedColors } = req.body;
+    let { userInput, lockedColors } = req.body;
+    if (typeof userInput !== 'string') {
+      userInput = '';
+    }
+    const trimmed = userInput.trim();
+    const maxLen = Number(process.env.MAX_PROMPT_CHARS) || 8000;
+    if (!trimmed) {
+      return res.status(400).json({
+        error: 'Missing input',
+        details: 'Provide a business description.',
+      });
+    }
+    if (trimmed.length > maxLen) {
+      return res.status(400).json({
+        error: 'Input too long',
+        details: `Shorten your description (max ${maxLen} characters).`,
+      });
+    }
+    userInput = trimmed;
 
     const apiKey =
       process.env.GEMINI_SECRET_KEY ||
