@@ -30,6 +30,27 @@ const paletteRateLimit = rateLimit({
   message: { error: 'Too many requests', details: 'Rate limit exceeded. Try again later.' },
 });
 
+app.get('/health', (_req, res) => {
+  res.json({ ok: true, service: 'colorpal-api' });
+});
+
+app.get('/', (_req, res) => {
+  res.type('html').send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ColorPal AI — API</title>
+</head>
+<body style="font-family: system-ui, sans-serif; max-width: 36rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5;">
+  <h1 style="font-size: 1.25rem;">ColorPal AI API</h1>
+  <p>This address is the <strong>backend</strong> for ColorPal AI. It has no web UI here.</p>
+  <p>Open your <strong>frontend</strong> site instead (Netlify, Render Static, or wherever you deployed the React app), with <code>REACT_APP_API_URL</code> pointing at this server.</p>
+  <p>Endpoints: <code>POST /api/generate-palette</code> · <a href="/health">GET /health</a></p>
+</body>
+</html>`);
+});
+
 /** Prefer Gemini 2.5 Flash; fall back if quota/model unavailable (override with GEMINI_MODEL). */
 const GEMINI_MODEL_FALLBACKS = [
   'gemini-2.5-flash',
