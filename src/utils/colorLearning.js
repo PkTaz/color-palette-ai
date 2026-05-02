@@ -5,11 +5,11 @@ export class ColorLearningSystem {
     this.feedback = [];
   }
 
-  async learn(colors, context, score) {
+  async learn(colors, context, patternScore) {
     const pattern = {
       colors,
       context,
-      score,
+      score: patternScore,
       timestamp: Date.now()
     };
 
@@ -40,19 +40,19 @@ export class ColorLearningSystem {
    * @param {Date} feedbackData.timestamp - When feedback was given
    */
   recordFeedback(feedbackData) {
-    // Store feedback for learning
-    this.feedback.push(feedbackData);
+    const enriched = {
+      ...feedbackData,
+      score: feedbackData.feedback === 'positive' ? 1 : -1
+    };
+    this.feedback.push(enriched);
     
     // Log feedback for debugging
-    console.log('Feedback recorded:', feedbackData);
-    
-    // Set weights based on feedback type
-    const score = feedbackData.feedback === 'positive' ? 1 : -1;
+    console.log('Feedback recorded:', enriched);
     
     // Store in localStorage for persistence
     try {
       const storedFeedback = JSON.parse(localStorage.getItem('colorFeedback') || '[]');
-      storedFeedback.push(feedbackData);
+      storedFeedback.push(enriched);
       localStorage.setItem('colorFeedback', JSON.stringify(storedFeedback));
     } catch (error) {
       console.error('Error storing feedback in localStorage:', error);

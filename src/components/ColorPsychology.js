@@ -36,8 +36,8 @@ const ColorPsychology = ({ colors, culture = 'western', businessIdea }) => {
 
   return (
     <div className="color-psychology-container">
-      <h3 style={{ fontSize: '1.6rem', fontWeight: '500', color: 'var(--ou-white)', marginBottom: '1.5rem', letterSpacing: '-0.5px' }}>
-        Color Psychology Insights
+      <h3 style={{ fontSize: '1.35rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-primary)', marginBottom: '1.5rem', letterSpacing: '-0.03em' }}>
+        Psychology &amp; perception
       </h3>
       
       <div className="psychology-section">
@@ -75,7 +75,7 @@ const ColorPsychology = ({ colors, culture = 'western', businessIdea }) => {
                     marginRight: '0.6rem',
                     boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)'
                   }}></span>
-                  <span style={{ fontFamily: 'Roboto Mono, monospace', fontSize: '0.9rem' }}>{color}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>{color}</span>
                 </div>
               ))}
             </div>
@@ -168,12 +168,12 @@ const ColorPsychology = ({ colors, culture = 'western', businessIdea }) => {
                     alignItems: 'center' 
                   }}>
                     <p className="color-name">{colorName}</p>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      background: 'var(--ou-crimson)', 
-                      padding: '0.2rem 0.4rem', 
+                    <span style={{
+                      fontSize: '0.75rem',
+                      background: 'var(--accent-primary)',
+                      padding: '0.2rem 0.4rem',
                       borderRadius: '4px',
-                      color: 'var(--ou-white)'
+                      color: '#ffffff'
                     }}>
                       #{index + 1}
                     </span>

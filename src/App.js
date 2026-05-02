@@ -1,17 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { generateColorPalette } from './services/claudeService';
+import { generateColorPalette } from './services/paletteService';
 import './App.css';
-import { FaHammer } from 'react-icons/fa';
-
-
-import { ColorAI } from './utils/colorAI';
+import { HiOutlineSparkles } from 'react-icons/hi2';
 import { ColorLearningSystem } from './utils/colorLearning';
-import { processImage } from './services/imageService';
 import ColorPsychology from './components/ColorPsychology';
 import ColorTheory from './components/ColorTheory';
 
-
-const colorAI = new ColorAI();
 const learningSystem = new ColorLearningSystem();
 
 function App() {
@@ -26,9 +20,6 @@ function App() {
 
   const [lockedColors, setLockedColors] = useState(new Set());
   const [currentPalette, setCurrentPalette] = useState(Array(5).fill([255, 255, 255]));
-  const [notification, setNotification] = useState(null);
-  const [industry, setIndustry] = useState('technology');
-  const [culture, setCulture] = useState('western');
   const [scrollProgress, setScrollProgress] = useState(0);
   const headerRef = useRef(null);
 
@@ -41,7 +32,7 @@ function App() {
         notification.className = 'notification';
         notification.innerHTML = `
           <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 16px; color: var(--ou-white);">✓</span>
+            <span style="font-size: 16px; color: var(--text-primary);">✓</span>
             <div>
               <div style="font-weight: 500; margin-bottom: 2px;">${type} copied to clipboard</div>
               <div style="font-size: 12px; opacity: 0.8;">${text}</div>
@@ -92,8 +83,6 @@ function App() {
     setBusinessIdea(event.target.value);
   };
 
-  const rgbToHex = (rgb) => `#${rgb.map(x => x.toString(16).padStart(2, '0')).join('')}`;
-
   // Update the fetchColorPalette function
   const fetchColorPalette = async () => {
     setIsLoading(true);
@@ -120,26 +109,6 @@ function App() {
       console.error('Error:', error);
     }
     setIsLoading(false);
-  };
-
-  // image upload handler
-  const handleImageUpload = async (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setIsLoading(true);
-      try {
-        const imageData = await processImage(file);
-        const colors = await colorAI.extractColorsFromImage(imageData);
-        setColorPalette({
-          ...colorPalette,
-          colors,
-          source: 'image'
-        });
-      } catch (error) {
-        console.error('Error processing image:', error);
-      }
-      setIsLoading(false);
-    }
   };
 
   
@@ -175,10 +144,10 @@ function App() {
     notification.className = 'notification';
     notification.innerHTML = `
       <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 16px; color: var(--ou-white);">👍</span>
+        <span style="font-size: 16px; color: var(--text-primary);">✓</span>
         <div>
-          <div style="font-weight: 500; margin-bottom: 2px;">Palette saved</div>
-          <div style="font-size: 12px; opacity: 0.8;">Added to your collection</div>
+          <div style="font-weight: 600; margin-bottom: 2px;">Archived to library</div>
+          <div style="font-size: 12px; opacity: 0.8;">Ready whenever you need to restore it</div>
         </div>
       </div>
     `;
@@ -205,10 +174,10 @@ function App() {
     notification.className = 'notification';
     notification.innerHTML = `
       <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 16px; color: var(--ou-white);">👎</span>
+        <span style="font-size: 16px; color: var(--text-primary);">✓</span>
         <div>
-          <div style="font-weight: 500; margin-bottom: 2px;">Feedback recorded</div>
-          <div style="font-size: 12px; opacity: 0.8;">Generating a new palette next time</div>
+          <div style="font-weight: 600; margin-bottom: 2px;">Preference logged</div>
+          <div style="font-size: 12px; opacity: 0.8;">We will bias away from this pattern next run</div>
         </div>
       </div>
     `;
@@ -260,8 +229,13 @@ function App() {
         <div className="header-content">
           <div className="logo-container">
             <div className="header-logo">
-              <FaHammer className="logo-icon" />
-              <span>ColorPal</span>
+              <span className="brand-mark" aria-hidden>
+                <HiOutlineSparkles className="logo-icon" />
+              </span>
+              <span className="brand-name">
+                ColorPal{' '}
+                <span className="brand-ai">AI</span>
+              </span>
             </div>
           </div>
         </div>
@@ -270,9 +244,13 @@ function App() {
       <div className="main-wrapper">
         <main className="main-content">
           <section className="input-section">
-            <h1 className="input-title">Generate Brand Colors</h1>
+            <p className="hero-eyebrow">
+              <span className="hero-eyebrow-dot" aria-hidden />
+              Brand &amp; product design teams
+            </p>
+            <h1 className="input-title">Turn your positioning into a cohesive palette</h1>
             <p className="input-description">
-              Describe your business or project, and our AI will create a harmonious color palette tailored to your industry and brand values.
+              Describe your company or product. <strong>ColorPal AI</strong> turns that brief into five role-aware colors with rationale you can share or hand off to design.
             </p>
             
             <div className="input-container">
@@ -280,7 +258,7 @@ function App() {
                 type="text"
                 value={businessIdea}
                 onChange={handleInputChange}
-                placeholder="e.g. A modern coffee shop with organic products and a cozy atmosphere"
+                placeholder="e.g. A climate fintech for SMBs—precise, optimistic, deeply trustworthy"
                 onKeyPress={(e) => e.key === 'Enter' && fetchColorPalette()}
               />
             </div>
@@ -290,13 +268,16 @@ function App() {
               onClick={fetchColorPalette}
               disabled={isLoading || !businessIdea.trim()}
             >
-              {isLoading ? 'Generating...' : 'Generate Palette'}
+              {isLoading ? 'Synthesizing palette…' : 'Generate palette'}
               {isLoading && <div className="loading-spinner"></div>}
             </button>
           </section>
           
           {colorPalette && (
             <div className="palette-container">
+              <p className="results-eyebrow">Your system</p>
+              <h2 className="results-title">Curated five-color stack</h2>
+              <p className="results-hint">Tap a swatch to lock it; locked colors persist when you regenerate.</p>
               {colorPalette.mood && (
                 <div className="palette-mood">{colorPalette.mood}</div>
               )}
@@ -356,7 +337,7 @@ function App() {
               
               {colorPalette.marketAnalysis && (
                 <div className="market-analysis">
-                  <h4>Similar Successful Brands</h4>
+                  <h4>Market parallels</h4>
                   {colorPalette.marketAnalysis.similarBrands.map((brand, index) => (
                     <div key={index} className="brand-example">
                       <h5>{brand.name}</h5>
@@ -369,7 +350,7 @@ function App() {
               
               {colorPalette.accessibilityScores && (
                 <div className="accessibility-info">
-                  <h4>Accessibility Metrics</h4>
+                  <h4>Accessibility signals</h4>
                   <p>Text Contrast: {colorPalette.accessibilityScores?.textContrast || 'N/A'}</p>
                   <p>WCAG Compliance: {colorPalette.accessibilityScores?.wcagCompliance || 'N/A'}</p>
                   <p>Colorblind Safe: {
@@ -383,7 +364,8 @@ function App() {
                 border: `5px solid rgb(${colorPalette.colors[2].join(',')})`,
                 color: `rgb(${colorPalette.colors[3].join(',')})`
               }}>
-                <h2>Example Header</h2>
+                <p className="preview-eyebrow">Live canvas</p>
+                <h2>Experience your palette in context</h2>
                 <button 
                   className="example-button" 
                   style={{ 
@@ -391,9 +373,9 @@ function App() {
                     color: `rgb(${colorPalette.colors[3].join(',')})` 
                   }}
                 >
-                  Example Button
+                  Primary action
                 </button>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                <p>Preview how gradients, borders, and type read together before you commit to production.</p>
               </div>
               
               <ColorPsychology 
@@ -403,13 +385,13 @@ function App() {
               />
               
               <div className="feedback-buttons">
-                <button className="like-button" onClick={handleLike}>
-                  <span className="button-icon">👍</span>
-                  Save Palette
+                <button type="button" className="like-button" onClick={handleLike}>
+                  <span className="button-icon" aria-hidden>✓</span>
+                  Save to library
                 </button>
-                <button className="dislike-button" onClick={handleDislike}>
-                  <span className="button-icon">👎</span>
-                  Generate New
+                <button type="button" className="dislike-button" onClick={handleDislike}>
+                  <span className="button-icon" aria-hidden>↻</span>
+                  Refine next run
                 </button>
               </div>
             </div>
@@ -420,10 +402,11 @@ function App() {
         </main>
         
         <aside className="saved-palettes">
-          <h2>Saved Palettes</h2>
+          <h2>Library</h2>
+          <p className="saved-palettes-sub">Versioned palettes from your session.</p>
           {savedPalettes.length === 0 ? (
-            <p style={{ color: 'var(--gray-300)', textAlign: 'center', margin: '20px 0' }}>
-              No saved palettes yet. Like a palette to save it.
+            <p className="saved-palettes-empty">
+              Nothing archived yet—save a winning palette and it lands here instantly.
             </p>
           ) : (
             savedPalettes.map(palette => (
@@ -450,18 +433,13 @@ function App() {
                     handleRemoveSaved(palette.id);
                   }}
                 >
-                  Remove
+                  Archive out
                 </button>
               </div>
             ))
           )}
         </aside>
       </div>
-      {notification && (
-        <div className="notification">
-          {notification}
-        </div>
-      )}
     </div>
   );
 }

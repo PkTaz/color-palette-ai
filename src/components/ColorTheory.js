@@ -1,609 +1,353 @@
-import React, { useState } from 'react';
-import { 
-  FaPalette, 
-  FaEyeDropper, 
-  FaBrain, 
-  FaCircle, 
-  FaUniversalAccess, 
-  FaPrint, 
+import React, { useMemo, useCallback, useRef, useState } from 'react';
+import {
+  FaPalette,
+  FaBrain,
+  FaUniversalAccess,
+  FaPrint,
   FaLightbulb,
-  FaRegCompass
+  FaRegCompass,
 } from 'react-icons/fa';
-import { 
-  MdColorLens, 
-  MdInvertColors, 
-  MdOutlineGridOn, 
-  MdLoop
-} from 'react-icons/md';
-import { 
-  IoIosColorPalette, 
-  IoIosColorFilter, 
-  IoIosColorWand 
-} from 'react-icons/io';
-import { 
-  BiCircle, 
-  BiCircleHalf, 
-  BiCircleThreeQuarter, 
-  BiCircleQuarter 
+import { MdInvertColors, MdOutlineGridOn } from 'react-icons/md';
+import { IoIosColorPalette, IoIosColorWand } from 'react-icons/io';
+import {
+  BiCircle,
+  BiCircleHalf,
+  BiCircleThreeQuarter,
+  BiCircleQuarter,
 } from 'react-icons/bi';
 import { TbColorSwatch } from 'react-icons/tb';
 
+const WHEEL = 300;
+const CX = WHEEL / 2;
+const RIM = (WHEEL / 2) * 0.92;
+
+function normHue(h) {
+  return ((h % 360) + 360) % 360;
+}
+
+/** Top of wheel = 0° (red), clockwise increases hue (matches conic-gradient). */
+function hueToXY(hue, r = RIM) {
+  const rad = (hue * Math.PI) / 180;
+  return {
+    x: CX + r * Math.sin(rad),
+    y: CX - r * Math.cos(rad),
+  };
+}
+
+function pointerToHue(clientX, clientY, rect) {
+  const x = clientX - rect.left - rect.width / 2;
+  const y = clientY - rect.top - rect.height / 2;
+  const hue = (Math.atan2(x, -y) * 180) / Math.PI;
+  return normHue(hue);
+}
+
+const HARMONY_COPY = {
+  complementary:
+    'Two colors opposite on the wheel (180° apart). Strong contrast—pair a dominant with an accent.',
+  analogous:
+    'Neighbors on the wheel (~±30° from base). Cohesive and calm; great for brand systems.',
+  triadic:
+    'Three hues evenly spaced (120°). Balanced energy without the tension of complements.',
+  split:
+    'Base hue plus two neighbors of its complement (150° & 210°). Contrast with less vibration than pure complementary.',
+  tetradic:
+    'Four hues in a rectangle (90° steps). Rich palette—watch balance so it does not feel busy.',
+  monochromatic:
+    'One hue, varied lightness. Sophisticated and foolproof; use saturation steps for depth.',
+};
+
+function harmonyAngles(type, baseHue) {
+  const b = normHue(baseHue);
+  const n = normHue;
+  switch (type) {
+    case 'complementary':
+      return [b, n(b + 180)];
+    case 'analogous':
+      return [n(b - 30), b, n(b + 30)];
+    case 'triadic':
+      return [b, n(b + 120), n(b + 240)];
+    case 'split':
+      return [b, n(b + 150), n(b + 210)];
+    case 'tetradic':
+      return [b, n(b + 90), n(b + 180), n(b + 270)];
+    case 'monochromatic':
+      return [b];
+    default:
+      return [b];
+  }
+}
+
+function swatchesForHarmony(type, baseHue, hues) {
+  if (type === 'monochromatic') {
+    const b = normHue(baseHue);
+    return [32, 44, 56, 68, 80].map((L) => ({
+      css: `hsl(${b}, 68%, ${L}%)`,
+      label: `${L}% L`,
+    }));
+  }
+  return hues.map((h) => ({
+    css: `hsl(${normHue(h)}, 72%, 48%)`,
+    label: `${Math.round(normHue(h))}°`,
+  }));
+}
+
 const ColorTheory = () => {
   const [activeHarmony, setActiveHarmony] = useState('complementary');
-  
+  const [baseHue, setBaseHue] = useState(12);
+  const wheelRef = useRef(null);
+
   const harmonyOptions = [
     { id: 'complementary', label: 'Complementary', icon: <BiCircleHalf className="harmony-icon" /> },
     { id: 'analogous', label: 'Analogous', icon: <BiCircleQuarter className="harmony-icon" /> },
     { id: 'triadic', label: 'Triadic', icon: <BiCircle className="harmony-icon" /> },
-    { id: 'split', label: 'Split Complementary', icon: <BiCircleThreeQuarter className="harmony-icon" /> },
+    { id: 'split', label: 'Split', icon: <BiCircleThreeQuarter className="harmony-icon" /> },
     { id: 'tetradic', label: 'Tetradic', icon: <MdOutlineGridOn className="harmony-icon" /> },
-    { id: 'monochromatic', label: 'Monochromatic', icon: <MdInvertColors className="harmony-icon" /> }
+    { id: 'monochromatic', label: 'Monochromatic', icon: <MdInvertColors className="harmony-icon" /> },
   ];
-  
-  // Dynamic examples based on color theory principles
-  const examples = {
-    complementary: ['#FF0000', '#00FFFF'],
-    analogous: ['#FF0000', '#FF8000', '#FFFF00'],
-    triadic: ['#FF0000', '#00FF00', '#0000FF'],
-    split: ['#FF0000', '#00FF80', '#0080FF'],
-    tetradic: ['#FF0000', '#FFFF00', '#00FFFF', '#0000FF'],
-    monochromatic: ['#FF0000', '#CC0000', '#990000', '#660000', '#330000']
-  };
-  
+
+  const examples = useMemo(
+    () => ({
+      complementary: ['#FF4D4D', '#4DD9FF'],
+      analogous: ['#FF6B35', '#F7931E', '#FDC830'],
+      triadic: ['#E63946', '#2A9D8F', '#457B9D'],
+      split: ['#E63946', '#06D6A0', '#118AB2'],
+      tetradic: ['#E63946', '#F4A261', '#2A9D8F', '#264653'],
+      monochromatic: ['#3D0A5C', '#6B1F8C', '#9B4DCA', '#C77DFF', '#E9D5FF'],
+    }),
+    []
+  );
+
+  const hues = useMemo(
+    () => harmonyAngles(activeHarmony, baseHue),
+    [activeHarmony, baseHue]
+  );
+
+  const swatches = useMemo(
+    () => swatchesForHarmony(activeHarmony, baseHue, hues),
+    [activeHarmony, baseHue, hues]
+  );
+
+  const handleWheelPick = useCallback((e) => {
+    const el = wheelRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setBaseHue(pointerToHue(e.clientX, e.clientY, rect));
+  }, []);
+
   const colorTheoryCards = [
     {
       title: 'Color Psychology',
       icon: <FaBrain className="card-icon" />,
-      content: 'Colors evoke emotional and psychological responses. For example, blue promotes trust and calm, while red creates urgency and excitement.',
-      example: ['#0062B8', '#D73A49', '#28A745', '#FFCA28']
+      content:
+        'Colors evoke emotional and psychological responses. For example, blue promotes trust and calm, while red creates urgency and excitement.',
+      example: ['#0062B8', '#D73A49', '#28A745', '#FFCA28'],
     },
     {
       title: 'Color Harmonies',
       icon: <IoIosColorPalette className="card-icon" />,
-      content: 'Color harmonies are structured relationships between colors that create pleasing visual experiences and balanced designs.',
-      example: examples[activeHarmony]
+      content:
+        'Harmonies are geometric relationships on the color wheel. Use the playground below to see how each type maps from a base hue.',
+      example: examples[activeHarmony],
     },
     {
       title: 'RGB vs CMYK',
       icon: <FaPrint className="card-icon" />,
-      content: 'RGB (Red, Green, Blue) is used for digital displays, while CMYK (Cyan, Magenta, Yellow, Key/Black) is used for print materials.',
-      example: ['#FF0000', '#00FF00', '#0000FF', '#00FFFF', '#FF00FF', '#FFFF00', '#000000']
+      content:
+        'RGB (Red, Green, Blue) is used for digital displays, while CMYK (Cyan, Magenta, Yellow, Key/Black) is used for print materials.',
+      example: ['#FF0000', '#00FF00', '#0000FF', '#00FFFF', '#FF00FF', '#FFFF00', '#000000'],
     },
     {
       title: 'Color Accessibility',
       icon: <FaUniversalAccess className="card-icon" />,
-      content: 'Accessible color combinations ensure content is perceivable by users with visual impairments such as color blindness.',
-      example: ['#000000', '#FFFFFF', '#0074D9', '#FF4136']
-    }
+      content:
+        'Accessible color combinations ensure content is perceivable by users with visual impairments such as color blindness.',
+      example: ['#000000', '#FFFFFF', '#0074D9', '#FF4136'],
+    },
   ];
-  
+
   const designTips = [
-    "Limit your color palette to 3-5 colors for a cohesive look",
-    "Use 60-30-10 rule: dominant color (60%), secondary color (30%), accent color (10%)",
-    "Ensure sufficient contrast between text and background colors",
-    "Consider cultural implications of colors in global designs",
-    "Test your palette with color blindness simulators for accessibility",
-    "Use color to guide attention to important elements",
-    "Create visual hierarchy with strategic color placement",
-    "Remember that colors appear different across various devices and environments"
+    'Limit your palette to 3–5 colors for a cohesive look',
+    'Use the 60-30-10 rule: dominant (60%), secondary (30%), accent (10%)',
+    'Ensure sufficient contrast between text and background (WCAG)',
+    'Consider cultural implications of colors in global designs',
+    'Test palettes with color-blindness simulators before launch',
+    'Use color to guide attention to primary actions',
+    'Build hierarchy with saturation and lightness, not only hue',
+    'Remember displays differ—validate on real devices when possible',
   ];
-  
+
   return (
     <section className="color-theory-section">
       <div className="color-theory-header">
         <h2 className="color-theory-title">
           <FaPalette className="title-icon" />
-          The Science of Color
+          Color theory &amp; harmonies
         </h2>
         <div className="color-wheel-container">
-          <div className="color-wheel-atmosphere"></div>
-          <div className="color-wheel-halo"></div>
-          <div className="color-wheel"></div>
-          <div className="color-wheel-border"></div>
-          <div className="color-wheel-reflection"></div>
-          <div className="color-wheel-texture"></div>
-          <div className="color-wheel-highlight"></div>
+          <div className="color-wheel-atmosphere" />
+          <div className="color-wheel-halo" />
+          <div className="color-wheel" />
+          <div className="color-wheel-reflection" />
+          <div className="color-wheel-texture" />
         </div>
       </div>
-      
-      <p style={{ fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '2rem', color: 'var(--gray-300)' }}>
-        <FaRegCompass style={{ marginRight: '8px', color: 'var(--ou-crimson)', verticalAlign: 'middle' }} />
-        Color theory is the conceptual framework that explores how humans perceive color and the visual effects of color combinations. 
-        Understanding these principles can transform your design from good to exceptional.
+
+      <p className="color-theory-intro">
+        <FaRegCompass className="color-theory-intro-icon" aria-hidden />
+        Color theory explains how we perceive hue, saturation, and lightness—and how combinations feel harmonious or tense.
+        <strong> ColorPal AI</strong> uses these same ideas when it builds your palettes.
       </p>
-      
+
       <div className="color-theory-grid">
         {colorTheoryCards.map((card, index) => (
-          <div className="theory-card" key={index}>
-            <h3>{card.icon} {card.title}</h3>
+          <div className="theory-card" key={card.title}>
+            <h3>
+              {card.icon} {card.title}
+            </h3>
             <p>{card.content}</p>
             <div className="theory-example">
               {card.example.map((color, i) => (
-                <div 
+                <div
                   key={i}
                   className="theory-example-segment"
                   style={{ backgroundColor: color }}
-                ></div>
+                />
               ))}
             </div>
-            <a href="#" className="read-more-link">Learn more</a>
+            <span className="read-more-link" role="presentation">
+              Explore
+            </span>
           </div>
         ))}
       </div>
-      
-      {/* Interactive Color Harmony Section */}
-      <div style={{ marginTop: '3rem' }}>
-        <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--ou-white)', fontWeight: '500' }}>
-          <IoIosColorWand className="section-icon" />
-          Explore Color Harmonies
+
+      <div className="harmony-playground">
+        <h3 className="harmony-playground-title">
+          <IoIosColorWand className="section-icon" aria-hidden />
+          Harmony playground
         </h3>
-        
-        <div className="harmony-selector">
-          {harmonyOptions.map(option => (
+        <p className="harmony-playground-lead">
+          Set a <strong>base hue</strong> by clicking the wheel or using the slider. White spokes mark each color in the
+          selected harmony; swatches show sample colors at readable lightness.
+        </p>
+
+        <div className="harmony-playground-grid">
+          <div className="harmony-wheel-column">
             <div
-              key={option.id}
-              className={`harmony-option ${activeHarmony === option.id ? 'active' : ''}`}
-              onClick={() => setActiveHarmony(option.id)}
+              ref={wheelRef}
+              className="harmony-wheel-wrap"
+              style={{ width: WHEEL, height: WHEEL }}
+              onClick={handleWheelPick}
+              role="application"
+              aria-label="Color wheel: click to set base hue"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                  setBaseHue((h) => normHue(h + 3));
+                }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                  setBaseHue((h) => normHue(h - 3));
+                }
+              }}
             >
-              {option.icon} {option.label}
+              <div
+                className="harmony-wheel-disk"
+                style={{
+                  background:
+                    'conic-gradient(hsl(0,100%,50%), hsl(60,100%,50%), hsl(120,100%,50%), hsl(180,100%,50%), hsl(240,100%,50%), hsl(300,100%,50%), hsl(360,100%,50%))',
+                }}
+              />
+              <svg
+                className="harmony-spokes-svg"
+                width={WHEEL}
+                height={WHEEL}
+                viewBox={`0 0 ${WHEEL} ${WHEEL}`}
+                aria-hidden
+              >
+                {hues.map((h) => {
+                  const p = hueToXY(h, RIM);
+                  return (
+                    <line
+                      key={`spoke-${h}-${activeHarmony}`}
+                      x1={CX}
+                      y1={CX}
+                      x2={p.x}
+                      y2={p.y}
+                      stroke="rgba(255,255,255,0.92)"
+                      strokeWidth={2.5}
+                      strokeLinecap="round"
+                    />
+                  );
+                })}
+              </svg>
+              {hues.map((h) => {
+                const p = hueToXY(h, RIM);
+                const isBase = Math.round(normHue(h)) === Math.round(normHue(baseHue));
+                return (
+                  <div
+                    key={`dot-${h}-${activeHarmony}`}
+                    className={`harmony-marker-dot${isBase ? ' is-base' : ''}`}
+                    style={{ left: p.x, top: p.y }}
+                  />
+                );
+              })}
+              <div className="harmony-wheel-hub" />
             </div>
-          ))}
-        </div>
-        
-        <div className="color-harmony-wheel">
-          {/* Main color wheel with static gradient */}
-          <div 
-            style={{ 
-              position: 'relative', 
-              width: '300px', 
-              height: '300px',
-              margin: '0 auto',
-              borderRadius: '50%',
-              background: 'conic-gradient(from 0deg, red, yellow, lime, aqua, blue, magenta, red)',
-              boxShadow: '0 0 25px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(0, 0, 0, 0.3)',
-              zIndex: 1,
-              overflow: 'visible'
-            }}
-          >
-            {/* Center point for all harmonies */}
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: 'white',
-              boxShadow: '0 0 8px rgba(255, 255, 255, 0.8), 0 0 4px rgba(0, 0, 0, 0.5)',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 10
-            }}></div>
-            
-            {/* Complementary harmony */}
-            {activeHarmony === 'complementary' && (
-              <>
-                {/* Vertical line */}
-                <div style={{
-                  position: 'absolute',
-                  top: '0',
-                  left: '50%',
-                  width: '3px',
-                  height: '100%',
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  boxShadow: '0 0 5px rgba(255, 255, 255, 0.5)',
-                  transform: 'translateX(-50%)',
-                  zIndex: 5
-                }}></div>
-                
-                {/* Top point */}
-                <div style={{
-                  position: 'absolute',
-                  top: '10%',
-                  left: '50%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  transform: 'translateX(-50%)',
-                  zIndex: 6
-                }}></div>
-                
-                {/* Bottom point */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '10%',
-                  left: '50%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  transform: 'translateX(-50%)',
-                  zIndex: 6
-                }}></div>
-              </>
-            )}
-            
-            {/* Analogous harmony */}
-            {activeHarmony === 'analogous' && (
-              <>
-                {/* Sector shape */}
-                <svg style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  zIndex: 5,
-                  pointerEvents: 'none'
-                }}>
-                  <path 
-                    d="M 150,150 L 150,0 A 150,150 0 0,1 270,80 Z" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.8)" 
-                    strokeWidth="3"
+            <p className="harmony-wheel-hint">
+              Click the wheel (or use arrow keys while focused) to move the base hue.
+            </p>
+            <div className="harmony-hue-slider">
+              <label htmlFor="harmony-hue-range">
+                Base hue: <strong>{Math.round(normHue(baseHue))}°</strong>
+              </label>
+              <input
+                id="harmony-hue-range"
+                type="range"
+                min={0}
+                max={360}
+                value={Math.round(normHue(baseHue))}
+                onChange={(e) => setBaseHue(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <div className="harmony-controls-column">
+            <div className="harmony-selector" role="tablist" aria-label="Harmony type">
+              {harmonyOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeHarmony === option.id}
+                  className={`harmony-option ${activeHarmony === option.id ? 'active' : ''}`}
+                  onClick={() => setActiveHarmony(option.id)}
+                >
+                  {option.icon} {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="harmony-type-blurb">{HARMONY_COPY[activeHarmony]}</p>
+            <div className="harmony-swatch-row">
+              {swatches.map((s, i) => (
+                <div className="harmony-swatch" key={`${s.css}-${i}`}>
+                  <div
+                    className="harmony-swatch-color"
+                    style={{ backgroundColor: s.css }}
+                    title={s.css}
                   />
-                </svg>
-                
-                {/* Points */}
-                <div style={{
-                  position: 'absolute',
-                  top: '0%',
-                  left: '50%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  transform: 'translate(-50%, 16px)',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  top: '15%',
-                  right: '25%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  top: '26%',
-                  right: '10%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-              </>
-            )}
-            
-            {/* Triadic harmony */}
-            {activeHarmony === 'triadic' && (
-              <>
-                {/* Triangle overlay */}
-                <svg style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  zIndex: 5,
-                  pointerEvents: 'none'
-                }}>
-                  <polygon 
-                    points="150,10 270,220 30,220" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.8)" 
-                    strokeWidth="3"
-                  />
-                </svg>
-                
-                {/* Points */}
-                <div style={{
-                  position: 'absolute',
-                  top: '3%',
-                  left: '50%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  transform: 'translateX(-50%)',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  bottom: '26%',
-                  left: '10%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  bottom: '26%',
-                  right: '10%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-              </>
-            )}
-            
-            {/* Split complementary harmony */}
-            {activeHarmony === 'split' && (
-              <>
-                {/* Y shape */}
-                <svg style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  zIndex: 5,
-                  pointerEvents: 'none'
-                }}>
-                  <path 
-                    d="M 150,150 L 150,10 M 150,150 L 60,240 M 150,150 L 240,240" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.8)" 
-                    strokeWidth="3"
-                  />
-                </svg>
-                
-                {/* Points */}
-                <div style={{
-                  position: 'absolute',
-                  top: '3%',
-                  left: '50%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  transform: 'translateX(-50%)',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  bottom: '20%',
-                  left: '20%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  bottom: '20%',
-                  right: '20%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-              </>
-            )}
-            
-            {/* Tetradic harmony */}
-            {activeHarmony === 'tetradic' && (
-              <>
-                {/* Rectangle overlay */}
-                <svg style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  zIndex: 5,
-                  pointerEvents: 'none'
-                }}>
-                  <rect 
-                    x="75" 
-                    y="75" 
-                    width="150" 
-                    height="150" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.8)" 
-                    strokeWidth="3"
-                  />
-                </svg>
-                
-                {/* Points */}
-                <div style={{
-                  position: 'absolute',
-                  top: '25%',
-                  left: '25%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  top: '25%',
-                  right: '25%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  bottom: '25%',
-                  right: '25%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  bottom: '25%',
-                  left: '25%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  zIndex: 6
-                }}></div>
-              </>
-            )}
-            
-            {/* Monochromatic harmony */}
-            {activeHarmony === 'monochromatic' && (
-              <>
-                {/* Concentric circles */}
-                <svg style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  zIndex: 5,
-                  pointerEvents: 'none'
-                }}>
-                  <circle 
-                    cx="150" 
-                    cy="150" 
-                    r="50" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.9)" 
-                    strokeWidth="3"
-                  />
-                  <circle 
-                    cx="150" 
-                    cy="150" 
-                    r="85" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.7)" 
-                    strokeWidth="2.5"
-                  />
-                  <circle 
-                    cx="150" 
-                    cy="150" 
-                    r="120" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.5)" 
-                    strokeWidth="2"
-                  />
-                  <line 
-                    x1="150" 
-                    y1="150" 
-                    x2="270" 
-                    y2="150" 
-                    stroke="rgba(255,255,255,0.8)" 
-                    strokeWidth="3"
-                  />
-                </svg>
-                
-                {/* Points on the radial line */}
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: '33%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  transform: 'translateY(-50%)',
-                  zIndex: 6
-                }}></div>
-                
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: '16%',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  border: '2px solid rgba(0, 0, 0, 0.7)',
-                  boxShadow: '0 0 10px white',
-                  transform: 'translateY(-50%)',
-                  zIndex: 6
-                }}></div>
-              </>
-            )}
+                  <span className="harmony-swatch-label">{s.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          marginTop: '1.5rem', 
-          gap: '10px' 
-        }}>
-          {examples[activeHarmony].map((color, index) => (
-            <div key={index} style={{ 
-              width: '60px', 
-              height: '60px', 
-              backgroundColor: color, 
-              borderRadius: '8px',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-              transition: 'all 0.3s ease',
-              transform: 'scale(1)',
-              '&:hover': {
-                transform: 'scale(1.1)'
-              }
-            }}></div>
-          ))}
-        </div>
       </div>
-      
-      {/* Design Tips Section */}
+
       <div className="tips-section">
-        <h3><FaLightbulb className="section-icon" />Professional Color Design Tips</h3>
+        <h3>
+          <FaLightbulb className="section-icon" />
+          Professional color tips
+        </h3>
         <div className="tips-list">
           {designTips.map((tip, index) => (
             <div className="tip-item" key={index}>
@@ -620,4 +364,4 @@ const ColorTheory = () => {
   );
 };
 
-export default ColorTheory; 
+export default ColorTheory;

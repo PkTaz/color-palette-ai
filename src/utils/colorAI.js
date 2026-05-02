@@ -53,7 +53,7 @@ export class ColorAI {
   async kMeansColorClustering(tensor, k) {
     // Implement k-means clustering for color extraction
     const pixels = await tensor.reshape([-1, 3]).array();
-    const centroids = this.initializeCentroids(pixels, k);
+    let centroids = this.initializeCentroids(pixels, k);
     
     // Perform k-means iterations
     for(let i = 0; i < 10; i++) {

@@ -79,11 +79,6 @@ export const labToRgb = (lab) => {
   return [Math.round(r), Math.round(g), Math.round(bValue)];
 };
 
-const labHelper = (value) => {
-  const threshold = 0.008856;
-  return value > threshold ? Math.pow(value, 1/3) : (7.787 * value) + (16/116);
-};
-
 export const calculateColorDistance = (lab1, lab2) => {
   // Calculate delta E (color difference) in Lab color space
   const deltaL = lab1[0] - lab2[0];
@@ -108,7 +103,8 @@ export const generateHarmonious = (baseColor, type = 'analogous') => {
         palette.push(labToRgb(variation));
       }
       break;
-    // Add more harmony types here
+    default:
+      break;
   }
   
   return palette;
@@ -196,7 +192,6 @@ export const getColorNameFromRGB = (rgb) => {
     '#b0c4de': 'Light Steel Blue',
     '#add8e6': 'Light Blue',
     '#b0e0e6': 'Powder Blue',
-    '#afeeee': 'Pale Turquoise',
     
     // Purples
     '#800080': 'Purple',
@@ -208,7 +203,6 @@ export const getColorNameFromRGB = (rgb) => {
     '#dda0dd': 'Plum',
     '#ee82ee': 'Violet',
     '#d8bfd8': 'Thistle',
-    '#ff00ff': 'Magenta',
     '#ff00ff': 'Fuchsia',
     '#4b0082': 'Indigo',
     '#8a2be2': 'Blue Violet',
